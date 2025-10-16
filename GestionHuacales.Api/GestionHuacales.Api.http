@@ -1,6 +1,19 @@
-@GestionHuacales.Api_HostAddress = http://localhost:5089
+@GestionHuacales.Api_HostAddress = https://localhost:7047
 
-GET {{GestionHuacales.Api_HostAddress}}/weatherforecast/
-Accept: application/json
+###
+
+POST https://gestionhuacalesapi.azurewebsites.net/api/entradahuacales
+Content-Type: application/json
+
+{
+  "nombreCliente": "Enel",
+  "huacales": [
+    {
+      "idTipo": 1,
+      "cantidad": 1,
+      "precio": 100
+    }
+  ]
+}
 
 ###

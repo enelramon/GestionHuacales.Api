@@ -97,7 +97,13 @@ public class EntradaHuacalesServices(IDbContextFactory<Contexto> DbFactory)
             .Where(criterio)
             .Select(h => new EntradaHuacalesDto
             {
-                NombreCliente = h.NombreCliente
+                NombreCliente = h.NombreCliente,
+                Huacales = h.entradaHuacalesDetalle.Select(d => new EntradaHuacalesDetalleDto()
+                {
+                    IdTipo = d.IdTipo,
+                    Cantidad = d.Cantidad,
+                    Precio = d.Precio
+                }).ToArray()
             })
             .ToArrayAsync();
     }
