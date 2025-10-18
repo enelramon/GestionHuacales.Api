@@ -1,5 +1,6 @@
 using GestionHuacales.Api.DAL;
 using GestionHuacales.Api.Services;
+using Mapster;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,7 +17,7 @@ var ConStr = builder.Configuration.GetConnectionString("sqlite");
 
 builder.Services.AddDbContextFactory<Contexto>(o => o.UseSqlite(ConStr));
 builder.Services.AddScoped<EntradaHuacalesServices>();
-
+builder.Services.AddMapster();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
