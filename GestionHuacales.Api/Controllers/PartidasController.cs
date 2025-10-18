@@ -1,108 +1,66 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
+﻿using GestionHuacales.Api.DAL;
+using GestionHuacales.Api.DTO;
+using GestionHuacales.Api.Models;
+using Mapster;
+using MapsterMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using GestionHuacales.Api.DAL;
-using GestionHuacales.Api.Models;
 
-namespace GestionHuacales.Api.Controllers
+namespace GestionHuacales.Api.Controllers;
+
+[Route("api/[controller]")]
+[ApiController]
+public class PartidasController(
+    Contexto context,
+    IMapper mapper) : ControllerBase
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class PartidasController : ControllerBase
+
+    // GET: api/Partidas
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<PartidasDto>>> GetPartidas()
     {
-        private readonly Contexto _context;
+        return await context.Partidas
+            .ProjectToType<PartidasDto>()
+            .ToListAsync();
+    }
 
-        public PartidasController(Contexto context)
+    // GET: api/Partidas/5
+    [HttpGet("{id}")]
+    public async Task<ActionResult<PartidasDto>> GetPartidas(int id)
+    {
+        var partidas = await context.Partidas.FindAsync(id);
+
+        if (partidas == null)
         {
-            _context = context;
+            return NotFound();
         }
 
-        // GET: api/Partidas
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Partidas>>> GetPartidas()
-        {
-            return await _context.Partidas.ToListAsync();
-        }
+        return mapper.Map<PartidasDto>(partidas);
+    }
 
-        // GET: api/Partidas/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Partidas>> GetPartidas(int id)
-        {
-            var partidas = await _context.Partidas.FindAsync(id);
+    // PUT: api/Partidas/5
+    [HttpPut("{id}")]
+    public async Task<IActionResult> PutPartidas(int id, PartidasDto partidasDto)
+    {
+        await context.Partidas
+            .Where(p => p.PartidaId == id)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(p => p.Jugador1Id, partidasDto.Jugador1Id)
+                .SetProperty(p => p.Jugador2Id, partidasDto.Jugador2Id)
+            );
 
-            if (partidas == null)
-            {
-                return NotFound();
-            }
+        return Ok();
+    }
 
-            return partidas;
-        }
+    // POST: api/Partidas
+    [HttpPost]
+    public async Task<ActionResult<PartidasDto>> PostPartidas(PartidasDto partidasDto)
+    {
+        var partidasEntity = mapper.Map<Partidas>(partidasDto);
+        partidasEntity.EstadoPartida = "";
+        context.Partidas.Add(partidasEntity);
+        await context.SaveChangesAsync();
 
-        // PUT: api/Partidas/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutPartidas(int id, Partidas partidas)
-        {
-            if (id != partidas.PartidaId)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(partidas).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!PartidasExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
-        }
-
-        // POST: api/Partidas
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
-        public async Task<ActionResult<Partidas>> PostPartidas(Partidas partidas)
-        {
-            _context.Partidas.Add(partidas);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetPartidas", new { id = partidas.PartidaId }, partidas);
-        }
-
-        // DELETE: api/Partidas/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeletePartidas(int id)
-        {
-            var partidas = await _context.Partidas.FindAsync(id);
-            if (partidas == null)
-            {
-                return NotFound();
-            }
-
-            _context.Partidas.Remove(partidas);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }
-
-        private bool PartidasExists(int id)
-        {
-            return _context.Partidas.Any(e => e.PartidaId == id);
-        }
+        return CreatedAtAction("GetPartidas", new { id = partidasEntity.PartidaId }, partidasDto);
     }
 }
