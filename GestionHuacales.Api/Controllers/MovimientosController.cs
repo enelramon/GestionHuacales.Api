@@ -22,16 +22,31 @@ namespace GestionHuacales.Api.Controllers
             _context = context;
         }
 
-
         // GET: api/Movimientos/5
         [HttpGet("{partidaId}")]
-        public async Task<ActionResult<Movimientos[]>> GetMovimientos(int partidaId)
+        [EndpointDescription("Obtiene los movimientos de una partida especifica.")]
+        public async Task<ActionResult<MovimientosDto[]>> GetMovimientos(int partidaId)
         {
+
+            var partida = await _context.Partidas.FindAsync(partidaId);
+            if (partida == null)
+            {
+                return NotFound($"No se Encontro la partida con el id:{partidaId}");
+            }
+
             var movimientos = await _context.Movimientos
                 .Where(m=> m.PartidaId == partidaId)
                 .ToArrayAsync();
 
-            return movimientos;
+            var movimientosDto = movimientos.Select(m => new MovimientosDto
+            {
+                PartidaId = m.PartidaId,
+                Jugador = m.JugadorId == partida.Jugador1Id ? "X" : "O",
+                PosicionFila = m.PosicionFila,
+                PosicionColumna = m.PosicionColumna
+            }).ToArray();
+
+            return movimientosDto;
         }
         
         // POST: api/Movimientos
