@@ -27,6 +27,13 @@ namespace GestionHuacales.Api.Controllers
         [EndpointDescription("Obtiene los movimientos de una partida especifica.")]
         public async Task<ActionResult<MovimientosDto[]>> GetMovimientos(int partidaId)
         {
+
+            var partida = await _context.Partidas.FindAsync(partidaId);
+            if (partida == null)
+            {
+                return NotFound($"No se Encontro la partida con el id:{partidaId}");
+            }
+
             var movimientos = await _context.Movimientos
                 .Where(m=> m.PartidaId == partidaId)
                 .ToArrayAsync();
@@ -34,7 +41,7 @@ namespace GestionHuacales.Api.Controllers
             var movimientosDto = movimientos.Select(m => new MovimientosDto
             {
                 PartidaId = m.PartidaId,
-                Jugador = m.JugadorId == m.Partida.Jugador1Id ? "X" : "O",
+                Jugador = m.JugadorId == partida.Jugador1Id ? "X" : "O",
                 PosicionFila = m.PosicionFila,
                 PosicionColumna = m.PosicionColumna
             }).ToArray();
