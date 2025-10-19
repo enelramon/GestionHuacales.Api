@@ -9,14 +9,14 @@ public class Partidas
     [Key]
     public int PartidaId { get; set; }
 
-    public int Jugador1Id { get; set; } = 3;
-    public int? Jugador2Id { get; set; } = 4;
+    public int Jugador1Id { get; set; }
+    public int? Jugador2Id { get; set; }
 
     [Required]
     [StringLength(20)]
     public string EstadoPartida { get; set; }
 
-    public int? GanadorId { get; set; } = 4;
+    public int? GanadorId { get; set; }
     public int TurnoJugadorId { get; set; }
 
     [StringLength(9)]
