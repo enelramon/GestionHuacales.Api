@@ -35,7 +35,7 @@ namespace GestionHuacales.Api.Controllers
             }
 
             var movimientos = await _context.Movimientos
-                .Where(m=> m.PartidaId == partidaId)
+                .Where(m => m.PartidaId == partidaId)
                 .ToArrayAsync();
 
             var movimientosDto = movimientos.Select(m => new MovimientosDto
@@ -48,7 +48,7 @@ namespace GestionHuacales.Api.Controllers
 
             return movimientosDto;
         }
-        
+
         // POST: api/Movimientos
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
@@ -57,21 +57,126 @@ namespace GestionHuacales.Api.Controllers
             var partida = await _context.Partidas.FindAsync(movimientoDto.PartidaId);
             if (partida == null)
             {
-                return NotFound();
+                return NotFound($"No se Encontro la partida con el id:{movimientoDto.PartidaId}");
+            }
+            if (partida.EstadoPartida.Contains("Finalizada"))
+            {
+                return BadRequest("La partida ya ha finalizado. No se pueden agregar mas movimientos.");
             }
 
-            var jugador = movimientoDto.Jugador??"X";
+            var jugador = movimientoDto.Jugador ?? "X";
+            var jugadorId = jugador.Equals("X") ? partida.Jugador1Id : partida.Jugador2Id;
+
+            var movimientosPartida = await _context.Movimientos
+                           .Where(m => m.PartidaId == movimientoDto.PartidaId)
+                           .ToListAsync();
+            
+if (partida.TurnoJugadorId == 0 && movimientosPartida.Count == 0)
+            {
+                partida.TurnoJugadorId = partida.Jugador1Id;
+                await _context.SaveChangesAsync();
+            }
+
+            #region Validar Movimiento
+
+            var esSuTurno = partida.TurnoJugadorId == (jugador.Equals("X") ? partida.Jugador1Id : partida.Jugador2Id);
+            if (!esSuTurno)
+            {
+                return BadRequest("No es el turno de este jugador.");
+            }
+
+            var existeMovimiento = await _context.Movimientos
+               .AnyAsync(m => m.PartidaId == movimientoDto.PartidaId &&
+                              m.PosicionFila == movimientoDto.PosicionFila &&
+                              m.PosicionColumna == movimientoDto.PosicionColumna);
+
+            if (existeMovimiento)
+                return BadRequest($"La posicion ya esta ocupada por otro movimiento.");
+
+            var totalMovimientos = await _context.Movimientos.CountAsync(m => m.PartidaId == movimientoDto.PartidaId);
+
+            if (totalMovimientos >= 9)
+            {
+                return BadRequest("La partida ya ha alcanzado el maximo de movimientos.");
+            }
+
+            #endregion
+
+            #region Crear Movimiento
+
             var movimiento = new Movimientos()
             {
                 PartidaId = movimientoDto.PartidaId,
-                JugadorId = jugador.Equals("X") ? partida?.Jugador1Id??0: partida?.Jugador2Id??0  ,
+                JugadorId = jugador.Equals("X") ? partida?.Jugador1Id ?? 0 : partida?.Jugador2Id ?? 0,
                 PosicionFila = movimientoDto.PosicionFila,
                 PosicionColumna = movimientoDto.PosicionColumna,
             };
             _context.Movimientos.Add(movimiento);
             await _context.SaveChangesAsync();
+            #endregion
 
-            return CreatedAtAction("GetMovimientos", new { id = movimiento.MovimientoId }, movimiento);
+            #region Comprobaciones y Acciones
+
+            movimientosPartida.Add(movimiento);
+
+            var tablero = new int[3, 3];
+            foreach (var mov in movimientosPartida)
+            {
+                var jugadorNum = mov.JugadorId == partida.Jugador1Id ? 1 : 2;
+                tablero[mov.PosicionFila, mov.PosicionColumna] = jugadorNum;
+            }
+
+            bool ComprobarGanador(int jugadorNum)
+            {
+                for (int i = 0; i < 3; i++)
+                {
+                    if (tablero[i, 0] == jugadorNum && 
+                        tablero[i, 1] == jugadorNum && 
+                        tablero[i, 2] == jugadorNum)
+                        return true;
+                    if (tablero[0, i] == jugadorNum && 
+                        tablero[1, i] == jugadorNum && 
+                        tablero[2, i] == jugadorNum)
+                        return true;
+                }
+                if (tablero[0, 0] == jugadorNum && 
+                    tablero[1, 1] == jugadorNum && 
+                    tablero[2, 2] == jugadorNum)
+                    return true;
+                if (tablero[0, 2] == jugadorNum && 
+                    tablero[1, 1] == jugadorNum && 
+                    tablero[2, 0] == jugadorNum)
+                    return true;
+                return false;
+            }
+
+            if (ComprobarGanador(1))
+            {
+                partida.EstadoPartida = "Finalizada";
+                partida.GanadorId = partida.Jugador1Id;
+                partida.FechaFin = DateTime.UtcNow;
+            }
+            else if (ComprobarGanador(2))
+            {
+                partida.EstadoPartida = "Finalizada";
+                partida.GanadorId = partida.Jugador2Id;
+                partida.FechaFin = DateTime.UtcNow;
+            }
+            else if (movimientosPartida.Count >= 9)
+            {
+                partida.EstadoPartida = "Finalizada";
+                partida.FechaFin = DateTime.UtcNow;
+            }
+            else
+            {
+                partida.TurnoJugadorId = jugador.Equals("X") ? partida.Jugador2Id ?? 0 : partida.Jugador1Id;
+            }
+
+            await _context.SaveChangesAsync();
+
+            #endregion
+
+            return CreatedAtAction("GetMovimientos", new { partidaId = movimientoDto.PartidaId }, movimiento);
         }
 
         // DELETE: api/Movimientos/5
