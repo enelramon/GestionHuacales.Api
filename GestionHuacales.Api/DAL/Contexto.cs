@@ -10,13 +10,11 @@ public class Contexto(DbContextOptions<Contexto> options) : DbContext(options)
 {
     public DbSet<EntradaHuacales> EntradaHuacales { get; set; }
     public DbSet<EntradaHuacalesDetalle> EntradaHuacalesDetalles { get; set; }
-
     public DbSet<TiposHuacales> TiposHuacales { get; set; }
-
-
     public DbSet<Jugadores> Jugadores { get; set; }
     public DbSet<Partidas> Partidas { get; set; }
     public DbSet<Movimientos> Movimientos { get; set; }
+    public DbSet<Tareas> Tareas { get; set; }
  
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
