@@ -17,16 +17,16 @@ public class PartidasController(
 
     // GET: api/Partidas
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<PartidasDto>>> GetPartidas()
+    public async Task<ActionResult<IEnumerable<PartidaResponse>>> GetPartidas()
     {
         return await context.Partidas
-            .ProjectToType<PartidasDto>()
+            .ProjectToType<PartidaResponse>()
             .ToListAsync();
     }
 
     // GET: api/Partidas/5
     [HttpGet("{id}")]
-    public async Task<ActionResult<PartidasDto>> GetPartidas(int id)
+    public async Task<ActionResult<PartidaResponse>> GetPartidas(int id)
     {
         var partidas = await context.Partidas.FindAsync(id);
 
@@ -35,32 +35,33 @@ public class PartidasController(
             return NotFound();
         }
 
-        return mapper.Map<PartidasDto>(partidas);
+        return mapper.Map<PartidaResponse>(partidas);
+    }
+    // POST: api/Partidas
+    [HttpPost]
+    public async Task<ActionResult<PartidaResponse>> PostPartidas(PartidaRequest partidaResponse)
+    {
+        var partidasEntity = mapper.Map<Partidas>(partidaResponse);
+        partidasEntity.TurnoJugadorId = partidasEntity.Jugador1Id;
+        context.Partidas.Add(partidasEntity);
+        await context.SaveChangesAsync();
+
+        return CreatedAtAction("GetPartidas", new { id = partidasEntity.PartidaId }, partidaResponse);
     }
 
     // PUT: api/Partidas/5
     [HttpPut("{id}")]
-    public async Task<IActionResult> PutPartidas(int id, PartidasDto partidasDto)
+    public async Task<IActionResult> PutPartidas(int id, PartidaRequest partidaResponse)
     {
         await context.Partidas
             .Where(p => p.PartidaId == id)
             .ExecuteUpdateAsync(s => s
-                .SetProperty(p => p.Jugador1Id, partidasDto.Jugador1Id)
-                .SetProperty(p => p.Jugador2Id, partidasDto.Jugador2Id)
+                .SetProperty(p => p.Jugador1Id, partidaResponse.Jugador1Id)
+                .SetProperty(p => p.Jugador2Id, partidaResponse.Jugador2Id)
             );
 
         return Ok();
     }
 
-    // POST: api/Partidas
-    [HttpPost]
-    public async Task<ActionResult<PartidasDto>> PostPartidas(PartidasDto partidasDto)
-    {
-        var partidasEntity = mapper.Map<Partidas>(partidasDto);
-        partidasEntity.EstadoPartida = "";
-        context.Partidas.Add(partidasEntity);
-        await context.SaveChangesAsync();
 
-        return CreatedAtAction("GetPartidas", new { id = partidasEntity.PartidaId }, partidasDto);
-    }
 }
