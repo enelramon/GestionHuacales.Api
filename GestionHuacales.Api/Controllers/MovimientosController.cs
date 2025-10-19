@@ -67,6 +67,16 @@ namespace GestionHuacales.Api.Controllers
             var jugador = movimientoDto.Jugador ?? "X";
             var jugadorId = jugador.Equals("X") ? partida.Jugador1Id : partida.Jugador2Id;
 
+            var movimientosPartida = await _context.Movimientos
+                           .Where(m => m.PartidaId == movimientoDto.PartidaId)
+                           .ToListAsync();
+            
+if (partida.TurnoJugadorId == 0 && movimientosPartida.Count == 0)
+            {
+                partida.TurnoJugadorId = partida.Jugador1Id;
+                await _context.SaveChangesAsync();
+            }
+
             #region Validar Movimiento
 
             var esSuTurno = partida.TurnoJugadorId == (jugador.Equals("X") ? partida.Jugador1Id : partida.Jugador2Id);
@@ -107,15 +117,7 @@ namespace GestionHuacales.Api.Controllers
 
             #region Comprobaciones y Acciones
 
-            // Cambiar Turno
-            partida.TurnoJugadorId = jugador.Equals("X") ? partida.Jugador2Id ?? 0 : partida.Jugador1Id;
-            await _context.SaveChangesAsync();
-
-            // Comprobar si hay ganador o eMpate
-            var movimientosPartida = await _context.Movimientos
-                .Where(m => m.PartidaId == movimientoDto.PartidaId)
-                .ToListAsync();
-
+            movimientosPartida.Add(movimiento);
 
             var tablero = new int[3, 3];
             foreach (var mov in movimientosPartida)
@@ -128,14 +130,22 @@ namespace GestionHuacales.Api.Controllers
             {
                 for (int i = 0; i < 3; i++)
                 {
-                    if (tablero[i, 0] == jugadorNum && tablero[i, 1] == jugadorNum && tablero[i, 2] == jugadorNum)
+                    if (tablero[i, 0] == jugadorNum && 
+                        tablero[i, 1] == jugadorNum && 
+                        tablero[i, 2] == jugadorNum)
                         return true;
-                    if (tablero[0, i] == jugadorNum && tablero[1, i] == jugadorNum && tablero[2, i] == jugadorNum)
+                    if (tablero[0, i] == jugadorNum && 
+                        tablero[1, i] == jugadorNum && 
+                        tablero[2, i] == jugadorNum)
                         return true;
                 }
-                if (tablero[0, 0] == jugadorNum && tablero[1, 1] == jugadorNum && tablero[2, 2] == jugadorNum)
+                if (tablero[0, 0] == jugadorNum && 
+                    tablero[1, 1] == jugadorNum && 
+                    tablero[2, 2] == jugadorNum)
                     return true;
-                if (tablero[0, 2] == jugadorNum && tablero[1, 1] == jugadorNum && tablero[2, 0] == jugadorNum)
+                if (tablero[0, 2] == jugadorNum && 
+                    tablero[1, 1] == jugadorNum && 
+                    tablero[2, 0] == jugadorNum)
                     return true;
                 return false;
             }
@@ -145,24 +155,28 @@ namespace GestionHuacales.Api.Controllers
                 partida.EstadoPartida = "Finalizada";
                 partida.GanadorId = partida.Jugador1Id;
                 partida.FechaFin = DateTime.UtcNow;
-                await _context.SaveChangesAsync();
             }
             else if (ComprobarGanador(2))
             {
                 partida.EstadoPartida = "Finalizada";
                 partida.GanadorId = partida.Jugador2Id;
                 partida.FechaFin = DateTime.UtcNow;
-                await _context.SaveChangesAsync();
             }
-            else
+            else if (movimientosPartida.Count >= 9)
             {
                 partida.EstadoPartida = "Finalizada";
                 partida.FechaFin = DateTime.UtcNow;
             }
+            else
+            {
+                partida.TurnoJugadorId = jugador.Equals("X") ? partida.Jugador2Id ?? 0 : partida.Jugador1Id;
+            }
+
+            await _context.SaveChangesAsync();
 
             #endregion
 
-            return CreatedAtAction("GetMovimientos", new { id = movimiento.MovimientoId }, movimiento);
+            return CreatedAtAction("GetMovimientos", new { partidaId = movimientoDto.PartidaId }, movimiento);
         }
 
         // DELETE: api/Movimientos/5
