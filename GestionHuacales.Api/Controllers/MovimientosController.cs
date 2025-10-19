@@ -25,7 +25,7 @@ namespace GestionHuacales.Api.Controllers
         // GET: api/Movimientos/5
         [HttpGet("{partidaId}")]
         [EndpointDescription("Obtiene los movimientos de una partida especifica.")]
-        public async Task<ActionResult<MovimientosDto[]>> GetMovimientos(int partidaId)
+        public async Task<ActionResult<MovimientosResponse[]>> GetMovimientos(int partidaId)
         {
 
             var partida = await _context.Partidas.FindAsync(partidaId);
@@ -35,12 +35,11 @@ namespace GestionHuacales.Api.Controllers
             }
 
             var movimientos = await _context.Movimientos
-                .Where(m=> m.PartidaId == partidaId)
+                .Where(m => m.PartidaId == partidaId)
                 .ToArrayAsync();
 
-            var movimientosDto = movimientos.Select(m => new MovimientosDto
+            var movimientosDto = movimientos.Select(m => new MovimientosResponse
             {
-                PartidaId = m.PartidaId,
                 Jugador = m.JugadorId == partida.Jugador1Id ? "X" : "O",
                 PosicionFila = m.PosicionFila,
                 PosicionColumna = m.PosicionColumna
@@ -48,30 +47,30 @@ namespace GestionHuacales.Api.Controllers
 
             return movimientosDto;
         }
-        
+
         // POST: api/Movimientos
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Movimientos>> PostMovimientos(MovimientosDto movimientoDto)
+        public async Task<ActionResult> PostMovimientos(MovimientosRequest movimiento)
         {
-            var partida = await _context.Partidas.FindAsync(movimientoDto.PartidaId);
+            var partida = await _context.Partidas
+                .FirstOrDefaultAsync(m => m.PartidaId == movimiento.PartidaId);
             if (partida == null)
             {
                 return NotFound();
             }
 
-            var jugador = movimientoDto.Jugador??"X";
-            var movimiento = new Movimientos()
+            var jugador = movimiento.Jugador;
+            var movimientoEntity = new Movimientos()
             {
-                PartidaId = movimientoDto.PartidaId,
-                JugadorId = jugador.Equals("X") ? partida?.Jugador1Id??0: partida?.Jugador2Id??0  ,
-                PosicionFila = movimientoDto.PosicionFila,
-                PosicionColumna = movimientoDto.PosicionColumna,
+                PartidaId = movimiento.PartidaId,
+                JugadorId = jugador.Equals("X") ? partida.Jugador1Id : partida.Jugador2Id ?? 0,
+                PosicionFila = movimiento.PosicionFila,
+                PosicionColumna = movimiento.PosicionColumna,
             };
-            _context.Movimientos.Add(movimiento);
+            _context.Movimientos.Add(movimientoEntity);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetMovimientos", new { id = movimiento.MovimientoId }, movimiento);
+            return Ok();
         }
 
         // DELETE: api/Movimientos/5
