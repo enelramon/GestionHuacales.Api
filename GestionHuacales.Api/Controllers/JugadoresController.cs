@@ -16,16 +16,16 @@ public class JugadoresController(
 
     // GET: api/Jugadores
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<JugadorDto>>> GetJugadores()
+    public async Task<ActionResult<IEnumerable<JugadorResponse>>> GetJugadores()
     {
         return await context.Jugadores
-            .ProjectToType<JugadorDto>()
+            .ProjectToType<JugadorResponse>()
             .ToListAsync();
     }
 
     // GET: api/Jugadores/5
     [HttpGet("{id}")]
-    public async Task<ActionResult<JugadorDto>> GetJugador(int id)
+    public async Task<ActionResult<JugadorResponse>> GetJugador(int id)
     {
         var jugador = await context.Jugadores.FindAsync(id);
 
@@ -34,31 +34,31 @@ public class JugadoresController(
             return NotFound();
         }
 
-        return mapper.Map<JugadorDto>(jugador);
+        return mapper.Map<JugadorResponse>(jugador);
     }
 
 
 
     // POST: api/Jugadores 
     [HttpPost]
-    public async Task<ActionResult<JugadorDto>> PostJugadores(JugadorDto jugadorDto)
+    public async Task<ActionResult<JugadorResponse>> PostJugadores(JugadorRequest jugador)
     {
-        var jugadorEntity = mapper.Map<Jugadores>(jugadorDto);
+        var jugadorEntity = mapper.Map<Jugadores>(jugador);
         context.Jugadores.Add(jugadorEntity);
         await context.SaveChangesAsync();
 
-        return CreatedAtAction("GetJugadores", new { id = jugadorEntity.JugadorId }, jugadorDto);
+        return CreatedAtAction("GetJugadores", new { id = jugadorEntity.JugadorId }, jugador);
     }
 
     // PUT: api/Jugadores/5 
     [HttpPut("{id}")]
-    public async Task<IActionResult> PutJugadores(int id, JugadorDto jugadorDto)
+    public async Task<IActionResult> PutJugadores(int id, JugadorRequest jugador)
     {
         await context.Jugadores
             .Where(j => j.JugadorId == id)
             .ExecuteUpdateAsync(s => s
-                    .SetProperty(j => j.Nombres, jugadorDto.Nombres)  // Updates the Nombres column
-                    .SetProperty(j => j.Email, jugadorDto.Email)      // Updates the Email column
+                    .SetProperty(j => j.Nombres, jugador.Nombres)
+                    .SetProperty(j => j.Email, jugador.Email)
             );
 
         return Ok();
