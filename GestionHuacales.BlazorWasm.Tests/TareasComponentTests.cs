@@ -2,6 +2,7 @@
 using GestionHuacales.BlazorWasm.Pages;
 using GestionHuacales.BlazorWasm.Services;
 using GestionHuacales.Shared;
+using GestionHuacales.Shared.Dtos;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 

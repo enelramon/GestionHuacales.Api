@@ -1,4 +1,5 @@
 ﻿using GestionHuacales.Shared;
+using GestionHuacales.Shared.Dtos;
 
 namespace GestionHuacales.BlazorWasm.Services;
 

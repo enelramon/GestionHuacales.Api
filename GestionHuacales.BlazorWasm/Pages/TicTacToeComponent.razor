@@ -1,0 +1,243 @@
+﻿@page "/gameBoard"
+@inject IPartidasApiService partidasApiService
+
+<!-- Estilos CSS integrados directamente en el componente -->
+<style>
+    .game-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        text-align: center;
+        font-family: sans-serif;
+        padding-top: 2rem;
+    }
+
+    .selection-screen h1,
+    .game-screen h2 {
+        margin-bottom: 1.5rem;
+    }
+
+    .player-buttons {
+        display: flex;
+        gap: 1rem;
+    }
+
+    /* Estilos para el tablero de juego */
+    .game-board {
+        display: grid;
+        grid-template-columns: repeat(3, 100px);
+        grid-template-rows: repeat(3, 100px);
+        gap: 8px;
+        margin-top: 1rem;
+    }
+
+    .cell {
+        width: 100px;
+        height: 100px;
+        background-color: #f0f0f0;
+        border: 2px solid #ccc;
+        border-radius: 8px;
+        font-size: 3rem;
+        font-weight: bold;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+    }
+
+        .cell:hover:not(:disabled) {
+            background-color: #e0e0e0;
+        }
+
+        .cell:disabled {
+            cursor: not-allowed;
+        }
+
+    /* Colores para los jugadores */
+    .player-x {
+        color: #E91E63;
+        /* Rosa */
+    }
+
+    .player-o {
+        color: #2196F3;
+        /* Azul */
+    }
+</style>
+<PageTitle>Home</PageTitle>
+
+
+<div class="container mx-auto max-w-lg p-6 bg-white rounded-lg shadow-xl text-center">
+
+    <div class="game-container">
+        @if (!gameStarted)
+        {
+            <!-- PANTALLA DE SELECCIÓN DE JUGADOR -->
+            <div class="selection-screen">
+                <h1>Elige tu jugador</h1>
+                <div class="player-buttons">
+                    <input type="number" @bind="Jugador1Id" />
+                    <button class="btn @(playerTypeSelection == PlayerType.X ? "btn-primary" : "btn-outline-primary")"
+                            @onclick="() => SelectPlayerType(PlayerType.X)">
+                        Jugador X
+                    </button>
+                    <input type="number" @bind="Jugador2Id" />
+                    <button class="btn @(playerTypeSelection == PlayerType.O ? "btn-info" : "btn-outline-info")"
+                            @onclick="() => SelectPlayerType(PlayerType.O)">
+                        Jugador O
+                    </button>
+
+                </div>
+                <button class="btn btn-success btn-lg mt-4"
+                        disabled="@(playerTypeSelection == null)"
+                        @onclick="StartGame">
+                    Iniciar Partida
+                </button>
+            </div>
+        }
+        else
+        {
+            <!-- PANTALLA DE JUEGO -->
+            <div class="game-screen">
+                <h2 class="game-status">@GameStatus</h2>
+
+                <div class="game-board">
+                    @for (var i = 0; i < 9; i++)
+                    {
+                        var cellIndex = i; // Copia local para evitar problemas con el closure en el lambda
+                                           <button class="cell @GetPlayerClass(board[cellIndex])"
+                                                   @onclick="() => HandleCellClick(cellIndex)"
+                                                   disabled="@(board[cellIndex] != null || winner != null || esEmpate)">
+                                               @board[cellIndex]?.ToString()
+                                           </button>
+                    }
+                </div>
+
+                <button class="btn btn-secondary mt-4" @onclick="RestartGame">
+                    Reiniciar Juego
+                </button>
+            </div>
+        }
+    </div>
+</div>
+@code {
+
+    public Guid CurrentSession { get; set; }
+    public int Jugador1Id { get; set; }
+    public int Jugador2Id { get; set; }
+
+    private enum PlayerType { X, O }
+
+    private bool gameStarted;
+    private PlayerType? playerTypeSelection;
+    private PlayerType?[] board = new PlayerType?[9];
+    private PlayerType _currentPlayerType = PlayerType.X;
+    private PlayerType? winner;
+    private bool esEmpate;
+
+    private string GameStatus
+    {
+        get
+        {
+            if (winner != null) return $"🏆 ¡Ganador: {winner}!";
+            return esEmpate
+                ? "🤝 ¡Es un empate!"
+                : $"Turno de: {_currentPlayerType}";
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        CurrentSession = Guid.NewGuid();
+    }
+
+    private void SelectPlayerType(PlayerType playerType)
+    {
+        playerTypeSelection = playerType;
+        StateHasChanged();
+    }
+
+    private void SelectPlayerX()
+    {
+        playerTypeSelection = PlayerType.X;
+    }
+
+    private async Task StartGame()
+    {
+        if (playerTypeSelection.HasValue)
+        {
+            await partidasApiService.PostPartida(Jugador1Id, Jugador2Id);
+            gameStarted = true;
+        }
+    }
+
+    private void HandleCellClick(int index)
+    {
+        // Ignorar si la celda está ocupada o el juego terminó
+        if (board[index] != null || winner != null || esEmpate)
+        {
+            return;
+        }
+
+        board[index] = _currentPlayerType;
+
+        winner = CheckForWinner();
+        if (winner != null)
+        {
+            return; // El juego termina
+        }
+
+        // Comprobar empate
+        esEmpate = board.All(cell => cell != null);
+        if (esEmpate)
+        {
+            return; // El juego termina
+        }
+
+        // Cambiar turno
+        _currentPlayerType = (_currentPlayerType == PlayerType.X)
+            ? PlayerType.O
+            : PlayerType.X;
+    }
+
+    private PlayerType? CheckForWinner()
+    {
+        var winningLines = new[]
+        {
+             new[] {0, 1, 2}, new[] {3, 4, 5}, new[] {6, 7, 8},// Horizontales
+             new[] {0, 3, 6}, new[] {1, 4, 7}, new[] {2, 5, 8},// Verticales
+             new[] {0, 4, 8}, new[] {2, 4, 6}// Diagonales
+        };
+
+        foreach (var line in winningLines)
+        {
+            var (a, b, c) = (line[0], line[1], line[2]);
+            if (board[a].HasValue && board[a] == board[b] && board[a] == board[c])
+            {
+                return board[a];
+            }
+        }
+
+        return null; // No hay ganador
+    }
+
+    private void RestartGame()
+    {
+        gameStarted = false;
+        playerTypeSelection = null;
+        board = new PlayerType?[9];
+        _currentPlayerType = PlayerType.X;
+        winner = null;
+        esEmpate = false;
+    }
+
+    private string GetPlayerClass(PlayerType? player)
+    {
+        if (!player.HasValue) return "";
+        return player == PlayerType.X ? "player-x" : "player-o";
+    }
+
+}

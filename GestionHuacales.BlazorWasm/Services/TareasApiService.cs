@@ -1,5 +1,6 @@
 ﻿using System.Net.Http.Json;
 using GestionHuacales.Shared;
+using GestionHuacales.Shared.Dtos;
 
 namespace GestionHuacales.BlazorWasm.Services;
 
