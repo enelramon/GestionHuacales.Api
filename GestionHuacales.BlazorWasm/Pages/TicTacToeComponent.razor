@@ -65,8 +65,18 @@
         color: #2196F3;
         /* Azul */
     }
+
+    /* Icono de búsqueda */
+    .bi-search-icon {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='currentColor' class='bi bi-search' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: center;
+    }
 </style>
-<PageTitle>Home</PageTitle>
+<PageTitle>TicTacToe</PageTitle>
 
 
 <div class="container mx-auto max-w-lg p-6 bg-white rounded-lg shadow-xl text-center">
@@ -74,59 +84,105 @@
     <div class="game-container">
         @if (!gameStarted)
         {
+            <div class="container-fluid py-5">
+                <h1 class="display-5 fw-bold">Tic Tac To</h1>
+                <p class="fs-12">
+                    Cada jugador solo debe colocar su símbolo una vez por turno y no debe ser sobre una casilla ya jugada.
+                    En caso de que el jugador haga trampa el ganador será el otro. Se debe conseguir realizar una línea recta o diagonal por símbolo.
+                </p>
+            </div>
             <!-- PANTALLA DE SELECCIÓN DE JUGADOR -->
             <div class="selection-screen">
-                <h1>Elige tu jugador</h1>
+                <h4>Crear una partida Nueva</h4>
                 <div class="player-buttons">
-                    <input type="number" @bind="Jugador1Id" />
-                    <button class="btn @(playerTypeSelection == PlayerType.X ? "btn-primary" : "btn-outline-primary")"
-                            @onclick="() => SelectPlayerType(PlayerType.X)">
-                        Jugador X
-                    </button>
-                    <input type="number" @bind="Jugador2Id" />
-                    <button class="btn @(playerTypeSelection == PlayerType.O ? "btn-info" : "btn-outline-info")"
-                            @onclick="() => SelectPlayerType(PlayerType.O)">
-                        Jugador O
-                    </button>
-
+                    <div class="mb-3">
+                        <label class="form-label">Jugador 1</label>
+                        <input type="number" class="form-control" @bind="Jugador1Id" placeholder="ID Jugador 1" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Jugador 2</label>
+                        <input type="number" class="form-control" @bind="Jugador2Id" placeholder="ID Jugador 2" />
+                    </div>
                 </div>
-                <button class="btn btn-success btn-lg mt-4"
-                        disabled="@(playerTypeSelection == null)"
-                        @onclick="StartGame">
-                    Iniciar Partida
+                <button class="btn btn-success btn-lg mt-2"
+                        disabled="@(Jugador1Id == 0 || Jugador2Id == 0)"
+                        @onclick="CreateGame">
+                    Crear Partida
                 </button>
+                <hr class="my-4" />
+
+                <h4>Unirse a Partida Existente</h4>
+                <div class="form-group">
+                    <label for="partidaId">ID de la Partida:</label>
+                    <div class="input-group">
+                        <input id="partidaId" type="number" class="form-control" @bind="PartidaId" placeholder="ID de la partida" />
+                        <button class="btn btn-outline-secondary" type="button" @onclick="OpenPartidasModal">
+                            <span class="bi-search-icon"></span>
+                        </button>
+                    </div>
+                </div>
+                <button class="btn btn-warning btn-lg mt-2"
+                        disabled="@(PartidaId == 0)"
+                        @onclick="JoinGame">
+                    Unirse a Partida
+                </button>
+
+                @if (!string.IsNullOrWhiteSpace(errorMessage))
+                {
+                    <div class="alert alert-danger mt-3">@errorMessage</div>
+                }
             </div>
         }
         else
         {
             <!-- PANTALLA DE JUEGO -->
             <div class="game-screen">
-                <h2 class="game-status">@GameStatus</h2>
+                <h2>Partida: @PartidaId</h2>
+                <h4 class="game-status">@GameStatus</h4>
 
                 <div class="game-board">
                     @for (var i = 0; i < 9; i++)
                     {
                         var cellIndex = i; // Copia local para evitar problemas con el closure en el lambda
-                                           <button class="cell @GetPlayerClass(board[cellIndex])"
-                                                   @onclick="() => HandleCellClick(cellIndex)"
-                                                   disabled="@(board[cellIndex] != null || winner != null || esEmpate)">
-                                               @board[cellIndex]?.ToString()
-                                           </button>
+                        <button class="cell @GetPlayerClass(board[cellIndex])"
+                                @onclick="() => HandleCellClick(cellIndex)"
+                                disabled="@(board[cellIndex] != null || winner != null || esEmpate)">
+                            @board[cellIndex]?.ToString()
+                        </button>
                     }
                 </div>
+                <div class="mt-4">
+                    <button class="btn btn-info me-2" @onclick="RefreshGameState" disabled="@refreshing">
+                        @if (refreshing)
+                        {
+                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                            <span> Cargando...</span>
+                        }
+                        else
+                        {
+                            <span>🔄 Refrescar Estado</span>
+                        }
+                    </button>
 
-                <button class="btn btn-secondary mt-4" @onclick="RestartGame">
-                    Reiniciar Juego
-                </button>
+                    <button class="btn btn-secondary" @onclick="LeaveGame">
+                        Salir de la Partida
+                    </button>
+                </div>
             </div>
         }
     </div>
 </div>
+
+<PartidasModal IsOpen="showModal" 
+               IsOpenChanged="(value) => showModal = value"
+               OnPartidaSelected="HandlePartidaSelected" />
+
 @code {
 
     public Guid CurrentSession { get; set; }
     public int Jugador1Id { get; set; }
     public int Jugador2Id { get; set; }
+    public int PartidaId { get; set; }
 
     private enum PlayerType { X, O }
 
@@ -136,7 +192,12 @@
     private PlayerType _currentPlayerType = PlayerType.X;
     private PlayerType? winner;
     private bool esEmpate;
-
+    private string? errorMessage;
+    private bool refreshing = false;
+    
+    // Variables para el modal
+    private bool showModal = false;
+    
     private string GameStatus
     {
         get
@@ -154,24 +215,39 @@
         CurrentSession = Guid.NewGuid();
     }
 
-    private void SelectPlayerType(PlayerType playerType)
+    private async Task CreateGame()
     {
-        playerTypeSelection = playerType;
-        StateHasChanged();
-    }
-
-    private void SelectPlayerX()
-    {
-        playerTypeSelection = PlayerType.X;
-    }
-
-    private async Task StartGame()
-    {
-        if (playerTypeSelection.HasValue)
+        if (Jugador1Id <= 0 || Jugador2Id <= 0)
         {
-            await partidasApiService.PostPartida(Jugador1Id, Jugador2Id);
-            gameStarted = true;
+            errorMessage = "Debes ingresar los jugadores.";
+            return;
         }
+        var response = await partidasApiService.PostPartida(Jugador1Id, Jugador2Id);
+        if (response is Resource<PartidaResponse>.Error error)
+        {
+            errorMessage = $"Error al crear la partida: {error.Message}";
+            return;
+        }
+        PartidaId = response.Data?.PartidaId ?? 0;
+        gameStarted = true;
+    }
+
+    private async Task JoinGame()
+    {
+        if (PartidaId <= 0)
+        {
+            errorMessage = "Debes ingresar el Id de la partida.";
+            return;
+        }
+
+        var response = await partidasApiService.GetPartidaAsync(PartidaId);
+        if (response is Resource<PartidaResponse>.Error error)
+        {
+            errorMessage = $"Error al unirse a la partida: {error.Message}";
+            return;
+        }
+        gameStarted = true;
+
     }
 
     private void HandleCellClick(int index)
@@ -203,6 +279,13 @@
             : PlayerType.X;
     }
 
+    private async Task RefreshGameState()
+    {
+        refreshing = true;
+        await Task.Delay(2000);
+        refreshing = false;
+    }
+
     private PlayerType? CheckForWinner()
     {
         var winningLines = new[]
@@ -224,20 +307,30 @@
         return null; // No hay ganador
     }
 
-    private void RestartGame()
-    {
-        gameStarted = false;
-        playerTypeSelection = null;
-        board = new PlayerType?[9];
-        _currentPlayerType = PlayerType.X;
-        winner = null;
-        esEmpate = false;
-    }
-
     private string GetPlayerClass(PlayerType? player)
     {
         if (!player.HasValue) return "";
         return player == PlayerType.X ? "player-x" : "player-o";
+    }
+    private void LeaveGame()
+    {
+        gameStarted = false; 
+        PartidaId = 0;
+        Jugador1Id = 0;
+        Jugador2Id = 0;
+        playerTypeSelection = null;
+        board = new PlayerType?[9]; 
+        errorMessage = null;
+    }
+
+    private void OpenPartidasModal()
+    {
+        showModal = true;
+    }
+
+    private void HandlePartidaSelected(int partidaId)
+    {
+        PartidaId = partidaId;
     }
 
 }
