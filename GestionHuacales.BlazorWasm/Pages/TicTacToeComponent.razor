@@ -1,5 +1,6 @@
 ﻿@page "/gameBoard"
 @inject IPartidasApiService partidasApiService
+@inject IMovimientosApiService movimientosApiService
 
 <!-- Estilos CSS integrados directamente en el componente -->
 <style>
@@ -112,25 +113,42 @@
                 <hr class="my-4" />
 
                 <h4>Unirse a Partida Existente</h4>
-                <div class="form-group">
-                    <label for="partidaId">ID de la Partida:</label>
+                <div class="form-group mt-3">
+                    <label class="form-label">Selecciona tu símbolo:</label>
+                    <div class="btn-group w-100" role="group">
+                        <input type="radio" class="btn-check" name="playerSymbol" id="symbolX"
+                               checked="@(selectedPlayerType == PlayerType.X)"
+                               @onchange="() => selectedPlayerType = PlayerType.X">
+                        <label class="btn btn-outline-danger" for="symbolX">
+                            <span class="fs-4 fw-bold">X</span>
+                        </label>
+
+                        <input type="radio" class="btn-check" name="playerSymbol" id="symbolO"
+                               checked="@(selectedPlayerType == PlayerType.O)"
+                               @onchange="() => selectedPlayerType = PlayerType.O">
+                        <label class="btn btn-outline-primary" for="symbolO">
+                            <span class="fs-4 fw-bold">O</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group  mt-3">
+                    <label class="form-label" for="partidaId">ID de la Partida:</label>
                     <div class="input-group">
                         <input id="partidaId" type="number" class="form-control" @bind="PartidaId" placeholder="ID de la partida" />
-                        <button class="btn btn-outline-secondary" type="button" @onclick="OpenPartidasModal">
+                        <button class="btn btn-outline-secondary" type="button"
+                                disabled="@(selectedPlayerType is null)"
+                                @onclick="OpenPartidasModal">
                             <span class="bi-search-icon"></span>
                         </button>
                     </div>
                 </div>
+
                 <button class="btn btn-warning btn-lg mt-2"
                         disabled="@(PartidaId == 0)"
                         @onclick="JoinGame">
                     Unirse a Partida
                 </button>
 
-                @if (!string.IsNullOrWhiteSpace(errorMessage))
-                {
-                    <div class="alert alert-danger mt-3">@errorMessage</div>
-                }
             </div>
         }
         else
@@ -138,12 +156,13 @@
             <!-- PANTALLA DE JUEGO -->
             <div class="game-screen">
                 <h2>Partida: @PartidaId</h2>
+                <h5>Tu sinbolo: @(selectedPlayerType?.ToString("g"))</h5>
                 <h4 class="game-status">@GameStatus</h4>
 
                 <div class="game-board">
                     @for (var i = 0; i < 9; i++)
                     {
-                        var cellIndex = i; // Copia local para evitar problemas con el closure en el lambda
+                        var cellIndex = i;
                         <button class="cell @GetPlayerClass(board[cellIndex])"
                                 @onclick="() => HandleCellClick(cellIndex)"
                                 disabled="@(board[cellIndex] != null || winner != null || esEmpate)">
@@ -170,10 +189,14 @@
                 </div>
             </div>
         }
+        @if (!string.IsNullOrWhiteSpace(errorMessage))
+        {
+            <div class="alert alert-danger mt-3">@errorMessage</div>
+        }
     </div>
 </div>
 
-<PartidasModal IsOpen="showModal" 
+<PartidasModal IsOpen="showModal"
                IsOpenChanged="(value) => showModal = value"
                OnPartidaSelected="HandlePartidaSelected" />
 
@@ -194,10 +217,11 @@
     private bool esEmpate;
     private string? errorMessage;
     private bool refreshing = false;
-    
+    private PlayerType? selectedPlayerType; // Símbolo seleccionado al unirse
+
     // Variables para el modal
     private bool showModal = false;
-    
+
     private string GameStatus
     {
         get
@@ -217,19 +241,18 @@
 
     private async Task CreateGame()
     {
+
+        gameStarted = true;
+        errorMessage = null;
         if (Jugador1Id <= 0 || Jugador2Id <= 0)
         {
             errorMessage = "Debes ingresar los jugadores.";
             return;
         }
+
         var response = await partidasApiService.PostPartida(Jugador1Id, Jugador2Id);
-        if (response is Resource<PartidaResponse>.Error error)
-        {
-            errorMessage = $"Error al crear la partida: {error.Message}";
-            return;
-        }
-        PartidaId = response.Data?.PartidaId ?? 0;
-        gameStarted = true;
+        response.OnSuccess(data => PartidaId = data.PartidaId);
+        response.OnError(message => errorMessage = $"Error al crear la partida: {message}");
     }
 
     private async Task JoinGame()
@@ -241,22 +264,33 @@
         }
 
         var response = await partidasApiService.GetPartidaAsync(PartidaId);
-        if (response is Resource<PartidaResponse>.Error error)
-        {
-            errorMessage = $"Error al unirse a la partida: {error.Message}";
-            return;
-        }
-        gameStarted = true;
-
+        await response.OnSuccessAsync(async _ =>
+         {
+             playerTypeSelection = selectedPlayerType;
+             gameStarted = true;
+             errorMessage = null;
+             await RefreshGameState();
+         });
+        response.OnError(message => errorMessage = $"Error al unirse a la partida: {message}");
     }
 
-    private void HandleCellClick(int index)
+    private async Task HandleCellClick(int index)
     {
         // Ignorar si la celda está ocupada o el juego terminó
         if (board[index] != null || winner != null || esEmpate)
         {
             return;
         }
+
+        // // Verificar que sea el turno del jugador actual
+        if (playerTypeSelection.HasValue && _currentPlayerType != playerTypeSelection.Value)
+        {
+            errorMessage = "No es tu turno. Espera a que el otro jugador haga su movimiento.";
+            return;
+        }
+
+        var resp = await PostMovement(index, _currentPlayerType);
+        if (!resp) return;
 
         board[index] = _currentPlayerType;
 
@@ -273,8 +307,28 @@
             return; // El juego termina
         }
 
-        // Cambiar turno
-        _currentPlayerType = (_currentPlayerType == PlayerType.X)
+        ChangeTurn(_currentPlayerType);
+    }
+
+    private async Task<bool> PostMovement(int index, PlayerType playerSymbol)
+    {
+        var movimiento = new MovimientoRequest
+        {
+            PartidaId = PartidaId,
+            Jugador = playerSymbol == PlayerType.X ?"X":"O",
+            PosicionFila = index / 3,
+            PosicionColumna = index % 3
+        };
+        var resp= await movimientosApiService.PostMovimientoAsync(movimiento);
+        return resp.IsSuccess();
+    }
+
+    private void ChangeTurn(PlayerType? jugador)
+    {
+        if (jugador is null)
+            jugador = PlayerType.O;
+
+        _currentPlayerType = (jugador == PlayerType.X)
             ? PlayerType.O
             : PlayerType.X;
     }
@@ -282,8 +336,35 @@
     private async Task RefreshGameState()
     {
         refreshing = true;
-        await Task.Delay(2000);
+        errorMessage = null;
+        var response = await movimientosApiService.GetMovimientosAsync(PartidaId);
+        response.OnSuccess(RefreshBoard);
+        response.OnError(message =>
+            errorMessage = $"Error al refrescar el estado del juego: {message}"
+        );
         refreshing = false;
+    }
+
+    private void RefreshBoard(MovimientoResponse[] gameData)
+    {
+        // Limpiar el tablero
+        board = new PlayerType?[9];
+
+        PlayerType? jugador = null;
+        // Reconstruir el tablero con los movimientos del servidor
+        foreach (var movimiento in gameData)
+        {
+            var index = movimiento.PosicionFila * 3 + movimiento.PosicionColumna;
+            if (index > 8) return;
+
+            jugador = movimiento.Jugador == "X" ? PlayerType.X : PlayerType.O;
+            board[index] = jugador;
+        }
+        ChangeTurn(jugador);
+
+        winner = CheckForWinner();
+
+        esEmpate = !winner.HasValue && board.All(cell => cell != null);
     }
 
     private PlayerType? CheckForWinner()
@@ -314,12 +395,12 @@
     }
     private void LeaveGame()
     {
-        gameStarted = false; 
+        gameStarted = false;
         PartidaId = 0;
         Jugador1Id = 0;
         Jugador2Id = 0;
         playerTypeSelection = null;
-        board = new PlayerType?[9]; 
+        board = new PlayerType?[9];
         errorMessage = null;
     }
 
@@ -328,9 +409,10 @@
         showModal = true;
     }
 
-    private void HandlePartidaSelected(int partidaId)
+    private async Task HandlePartidaSelected(int partidaId)
     {
         PartidaId = partidaId;
+        await JoinGame();
     }
 
 }
