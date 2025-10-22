@@ -40,6 +40,7 @@ namespace GestionHuacales.Api.Controllers
 
             var movimientosDto = movimientos.Select(m => new MovimientosResponse
             {
+                MovimientoId = m.MovimientoId,
                 Jugador = m.JugadorId == partida.Jugador1Id ? "X" : "O",
                 PosicionFila = m.PosicionFila,
                 PosicionColumna = m.PosicionColumna
