@@ -39,12 +39,14 @@ public class PartidasController(
     }
     // POST: api/Partidas
     [HttpPost]
-    public async Task<ActionResult<PartidaResponse>> PostPartidas(PartidaRequest partidaResponse)
+    public async Task<ActionResult<PartidaResponse>> PostPartidas(PartidaRequest partidaRequest)
     {
-        var partidasEntity = mapper.Map<Partidas>(partidaResponse);
+        var partidasEntity = mapper.Map<Partidas>(partidaRequest);
         partidasEntity.TurnoJugadorId = partidasEntity.Jugador1Id;
         context.Partidas.Add(partidasEntity);
         await context.SaveChangesAsync();
+
+        var partidaResponse = mapper.Map<PartidaResponse>(partidasEntity);
 
         return CreatedAtAction("GetPartidas", new { id = partidasEntity.PartidaId }, partidaResponse);
     }
