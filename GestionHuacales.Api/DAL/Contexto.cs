@@ -16,6 +16,7 @@ public class Contexto(DbContextOptions<Contexto> options) : DbContext(options)
     public DbSet<Movimientos> Movimientos { get; set; }
     public DbSet<Tareas> Tareas { get; set; }
     public DbSet<Gastos> Gastos { get; set; }
+    public DbSet<Depositos> Depositos { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
