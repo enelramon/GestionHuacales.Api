@@ -1,0 +1,19 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "test:blazorwasm",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"test",
+				"GestionHuacales.BlazorWasm.Tests/GestionHuacales.BlazorWasm.Tests.csproj",
+				"-v",
+				"m"
+			],
+			"problemMatcher": [
+				"$msCompile"
+			]
+		}
+	]
+}
