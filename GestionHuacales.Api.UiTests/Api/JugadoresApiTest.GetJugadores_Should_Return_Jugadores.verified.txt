@@ -1,0 +1,152 @@
+﻿[
+  {
+    jugadorId: 1,
+    nombres: Enel,
+    email: enel@gmail.com
+  },
+  {
+    jugadorId: 2,
+    nombres: Juan,
+    email: string
+  },
+  {
+    jugadorId: 3,
+    nombres: Ramon,
+    email: string
+  },
+  {
+    jugadorId: 4,
+    nombres: Michael Jose Vasquez Test,
+    email: michael_jose@ucne.edu.do
+  },
+  {
+    jugadorId: 5,
+    nombres: eddian,
+    email: eddian_vasquez@ucne.edu.do
+  },
+  {
+    jugadorId: 6,
+    nombres: eddian,
+    email: eddianvasquez12@gmai.com
+  },
+  {
+    jugadorId: 7,
+    nombres: Ramón David ,
+    email: Djramon5555@gmail.com
+  },
+  {
+    jugadorId: 8,
+    nombres: Angel,
+    email: ajer@hotmail.com
+  },
+  {
+    jugadorId: 9,
+    nombres: Michael Test,
+    email: test@test.com
+  },
+  {
+    jugadorId: 10,
+    nombres: strin,
+    email: string
+  },
+  {
+    jugadorId: 11,
+    nombres: strin,
+    email: string
+  },
+  {
+    jugadorId: 12,
+    nombres: Test,
+    email: jsssjshshs@gmail.com
+  },
+  {
+    jugadorId: 13,
+    nombres: Luis ,
+    email: luis@gmail.com
+  },
+  {
+    jugadorId: 14,
+    nombres: Luis ,
+    email: luis@gmail.com
+  },
+  {
+    jugadorId: 15,
+    nombres: Luis ,
+    email: luis@gmail.com
+  },
+  {
+    jugadorId: 16,
+    nombres: Luis ,
+    email: luis@gmail.com
+  },
+  {
+    jugadorId: 17,
+    nombres: Luis ,
+    email: test2@gmail.com
+  },
+  {
+    jugadorId: 18,
+    nombres: Andy Javier,
+    email: andyjavierrd@gmail.com
+  },
+  {
+    jugadorId: 19,
+    nombres: Andy,
+    email: andyjavierrd@gmail.com
+  },
+  {
+    jugadorId: 20,
+    nombres: Steven Javier ,
+    email: stevenjavierEditado@gmail.com
+  },
+  {
+    jugadorId: 21,
+    nombres: imanol,
+    email: imanolacosta31@gmail.com
+  },
+  {
+    jugadorId: 22,
+    nombres: Soy yo que se ,
+    email: SoyYo@Soy.com
+  },
+  {
+    jugadorId: 23,
+    nombres: Test Jugador,
+    email: testjugador@test.com
+  },
+  {
+    jugadorId: 24,
+    nombres: andy,
+    email: andy@gmail.com
+  },
+  {
+    jugadorId: 25,
+    nombres: Luis,
+    email: luis@gmail.com
+  },
+  {
+    jugadorId: 26,
+    nombres: Test Jugador,
+    email: testjugador@test.com
+  },
+  {
+    jugadorId: 27,
+    nombres: Test Jugador,
+    email: testjugador@test.com
+  },
+  {
+    jugadorId: 28,
+    nombres: Test Jugador,
+    email: testjugador@test.com
+  },
+  {
+    jugadorId: 29,
+    nombres: Test Jugador,
+    email: testjugador@test.com
+  },
+  {
+    jugadorId: 30,
+    nombres: Test Jugador,
+    email: testjugador@test.com
+  }
+]

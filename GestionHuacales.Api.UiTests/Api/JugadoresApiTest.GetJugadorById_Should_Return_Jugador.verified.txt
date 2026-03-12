@@ -1,0 +1,5 @@
+﻿{
+  jugadorId: 1,
+  nombres: Enel,
+  email: enel@gmail.com
+}

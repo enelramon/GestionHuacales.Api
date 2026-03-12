@@ -1,0 +1,4 @@
+﻿{
+  nombres: Test Jugador,
+  email: testjugador@test.com
+}
