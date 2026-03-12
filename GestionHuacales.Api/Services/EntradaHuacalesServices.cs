@@ -50,10 +50,10 @@ public class EntradaHuacalesServices(IDbContextFactory<Contexto> DbFactory)
             return false;
         }
 
-        await AfectarEntradasHuacales(detalle: [.. entradaAnterior.entradaHuacalesDetalle],
+        await AfectarEntradasHuacales(contexto,detalle: [.. entradaAnterior.entradaHuacalesDetalle],
                                       TipoOperacion.Resta);
 
-        await AfectarEntradasHuacales([.. entradaHuacales.entradaHuacalesDetalle], TipoOperacion.Suma);
+        await AfectarEntradasHuacales(contexto, [.. entradaHuacales.entradaHuacalesDetalle], TipoOperacion.Suma);
 
         contexto.EntradaHuacales.Update(entradaHuacales);
         return await contexto.SaveChangesAsync() > 0;
@@ -80,7 +80,7 @@ public class EntradaHuacalesServices(IDbContextFactory<Contexto> DbFactory)
             return false;
         }
 
-        await AfectarEntradasHuacales(detalle: [.. entrada.entradaHuacalesDetalle], TipoOperacion.Resta);
+        await AfectarEntradasHuacales(contexto, detalle: [.. entrada.entradaHuacalesDetalle], TipoOperacion.Resta);
 
         contexto.EntradaHuacalesDetalles.RemoveRange(entrada.entradaHuacalesDetalle);
         contexto.EntradaHuacales.Remove(entrada);
@@ -108,9 +108,8 @@ public class EntradaHuacalesServices(IDbContextFactory<Contexto> DbFactory)
             .ToArrayAsync();
     }
 
-    private async Task AfectarEntradasHuacales(EntradaHuacalesDetalle[] detalle, TipoOperacion tipoOperacion)
-    {
-        await using var contexto = await DbFactory.CreateDbContextAsync();
+    private async Task AfectarEntradasHuacales(Contexto contexto ,EntradaHuacalesDetalle[] detalle, TipoOperacion tipoOperacion)
+    {        
         foreach (var item in detalle)
         {
             var tipoHuacal = await contexto.TiposHuacales
@@ -124,8 +123,6 @@ public class EntradaHuacalesServices(IDbContextFactory<Contexto> DbFactory)
             {
                 tipoHuacal.Existencia -= item.Cantidad;
             }
-
-            await contexto.SaveChangesAsync();
         }
     }
     public enum TipoOperacion
