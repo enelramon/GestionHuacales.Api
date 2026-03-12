@@ -1,3 +1,4 @@
+using GestionHuacales.Api.Attributes;
 using GestionHuacales.Api.DAL;
 using GestionHuacales.Api.Dtos;
 using GestionHuacales.Api.Models;
@@ -9,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 namespace GestionHuacales.Api.Controllers;
 [Route("api/[controller]")]
 [ApiController]
+[ApiKeyAuth]
 public class DepositosController(
     Contexto context,
     IMapper mapper) : ControllerBase

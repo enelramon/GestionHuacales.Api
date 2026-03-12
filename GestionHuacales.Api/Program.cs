@@ -1,4 +1,5 @@
 using GestionHuacales.Api.DAL;
+using GestionHuacales.Api.Filters;
 using GestionHuacales.Api.Services;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
@@ -6,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+builder.Services.AddScoped<ApiKeyAuthorizationFilter>();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
