@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 namespace GestionHuacales.Api.Controllers;
 [Route("api/[controller]")]
 [ApiController]
-[ApiKeyAuth]
+//[ApiKeyAuth]
 public class DepositosController(
     Contexto context,
     IMapper mapper) : ControllerBase
