@@ -1,7 +1,7 @@
 ﻿using GestionHuacales.Api.Models;
 using GestionHuacales.Api.Models;
 using Microsoft.EntityFrameworkCore;
- 
+
 
 namespace GestionHuacales.Api.DAL;
 
@@ -10,14 +10,15 @@ public class Contexto(DbContextOptions<Contexto> options) : DbContext(options)
 {
     public DbSet<EntradaHuacales> EntradaHuacales { get; set; }
     public DbSet<EntradaHuacalesDetalle> EntradaHuacalesDetalles { get; set; }
-
     public DbSet<TiposHuacales> TiposHuacales { get; set; }
-
-
     public DbSet<Jugadores> Jugadores { get; set; }
     public DbSet<Partidas> Partidas { get; set; }
     public DbSet<Movimientos> Movimientos { get; set; }
- 
+    public DbSet<Tareas> Tareas { get; set; }
+    public DbSet<Gastos> Gastos { get; set; }
+    public DbSet<Depositos> Depositos { get; set; }
+    public DbSet<Usuarios> Usuarios { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<TiposHuacales>().HasData(

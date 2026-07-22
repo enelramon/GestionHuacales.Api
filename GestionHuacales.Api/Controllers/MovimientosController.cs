@@ -25,7 +25,7 @@ namespace GestionHuacales.Api.Controllers
         // GET: api/Movimientos/5
         [HttpGet("{partidaId}")]
         [EndpointDescription("Obtiene los movimientos de una partida especifica.")]
-        public async Task<ActionResult<MovimientosDto[]>> GetMovimientos(int partidaId)
+        public async Task<ActionResult<MovimientosResponse[]>> GetMovimientos(int partidaId)
         {
 
             var partida = await _context.Partidas.FindAsync(partidaId);
@@ -38,9 +38,9 @@ namespace GestionHuacales.Api.Controllers
                 .Where(m => m.PartidaId == partidaId)
                 .ToArrayAsync();
 
-            var movimientosDto = movimientos.Select(m => new MovimientosDto
+            var movimientosDto = movimientos.Select(m => new MovimientosResponse
             {
-                PartidaId = m.PartidaId,
+                MovimientoId = m.MovimientoId,
                 Jugador = m.JugadorId == partida.Jugador1Id ? "X" : "O",
                 PosicionFila = m.PosicionFila,
                 PosicionColumna = m.PosicionColumna
@@ -50,11 +50,11 @@ namespace GestionHuacales.Api.Controllers
         }
 
         // POST: api/Movimientos
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Movimientos>> PostMovimientos(MovimientosDto movimientoDto)
+        public async Task<ActionResult> PostMovimientos(MovimientosRequest movimiento)
         {
-            var partida = await _context.Partidas.FindAsync(movimientoDto.PartidaId);
+            var partida = await _context.Partidas
+                .FirstOrDefaultAsync(m => m.PartidaId == movimiento.PartidaId);
             if (partida == null)
             {
                 return NotFound($"No se Encontro la partida con el id:{movimientoDto.PartidaId}");
@@ -100,18 +100,15 @@ if (partida.TurnoJugadorId == 0 && movimientosPartida.Count == 0)
                 return BadRequest("La partida ya ha alcanzado el maximo de movimientos.");
             }
 
-            #endregion
-
-            #region Crear Movimiento
-
-            var movimiento = new Movimientos()
+            var jugador = movimiento.Jugador;
+            var movimientoEntity = new Movimientos()
             {
-                PartidaId = movimientoDto.PartidaId,
-                JugadorId = jugador.Equals("X") ? partida?.Jugador1Id ?? 0 : partida?.Jugador2Id ?? 0,
-                PosicionFila = movimientoDto.PosicionFila,
-                PosicionColumna = movimientoDto.PosicionColumna,
+                PartidaId = movimiento.PartidaId,
+                JugadorId = jugador.Equals("X") ? partida.Jugador1Id : partida.Jugador2Id ?? 0,
+                PosicionFila = movimiento.PosicionFila,
+                PosicionColumna = movimiento.PosicionColumna,
             };
-            _context.Movimientos.Add(movimiento);
+            _context.Movimientos.Add(movimientoEntity);
             await _context.SaveChangesAsync();
             #endregion
 
@@ -176,7 +173,7 @@ if (partida.TurnoJugadorId == 0 && movimientosPartida.Count == 0)
 
             #endregion
 
-            return CreatedAtAction("GetMovimientos", new { partidaId = movimientoDto.PartidaId }, movimiento);
+            return Ok();
         }
 
         // DELETE: api/Movimientos/5

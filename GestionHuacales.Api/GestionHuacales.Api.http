@@ -17,3 +17,15 @@ Content-Type: application/json
 }
 
 ###
+
+POST {{GestionHuacales.Api_HostAddress}}/api/movimientos
+Content-Type: application/json
+
+{
+  "partidaId": 1,
+  "jugador": "X",
+  "posicionFila": 0,
+  "posicionColumna": 0
+}
+
+###

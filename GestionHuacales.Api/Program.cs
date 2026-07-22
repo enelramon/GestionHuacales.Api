@@ -1,4 +1,5 @@
 using GestionHuacales.Api.DAL;
+using GestionHuacales.Api.Filters;
 using GestionHuacales.Api.Services;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
@@ -6,12 +7,24 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+builder.Services.AddScoped<ApiKeyAuthorizationFilter>();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+
+// Add CORS to allow any origin
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.AllowAnyOrigin()
+            .AllowAnyMethod()
+            .AllowAnyHeader();
+    });
+});
 
 var ConStr = builder.Configuration.GetConnectionString("sqlite");
 
@@ -29,6 +42,8 @@ var app = builder.Build();
 //}
 
 app.UseHttpsRedirection();
+
+app.UseCors();
 
 app.UseAuthorization();
 

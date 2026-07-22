@@ -15,7 +15,30 @@ namespace GestionHuacales.Api.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "9.0.9");
+            modelBuilder.HasAnnotation("ProductVersion", "9.0.10");
+
+            modelBuilder.Entity("GestionHuacales.Api.Models.Depositos", b =>
+                {
+                    b.Property<int>("DepositoId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Banco")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Concepto")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("Fecha")
+                        .HasColumnType("TEXT");
+
+                    b.Property<double>("Monto")
+                        .HasColumnType("REAL");
+
+                    b.HasKey("DepositoId");
+
+                    b.ToTable("Depositos");
+                });
 
             modelBuilder.Entity("GestionHuacales.Api.Models.EntradaHuacales", b =>
                 {
@@ -69,6 +92,34 @@ namespace GestionHuacales.Api.Migrations
                     b.HasIndex("IdTipo");
 
                     b.ToTable("EntradaHuacalesDetalles");
+                });
+
+            modelBuilder.Entity("GestionHuacales.Api.Models.Gastos", b =>
+                {
+                    b.Property<int>("GastoId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("Fecha")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("Itbis")
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("Monto")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Ncf")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Suplidor")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("GastoId");
+
+                    b.ToTable("Gastos");
                 });
 
             modelBuilder.Entity("GestionHuacales.Api.Models.Jugadores", b =>
@@ -181,6 +232,24 @@ namespace GestionHuacales.Api.Migrations
                     b.ToTable("Partidas");
                 });
 
+            modelBuilder.Entity("GestionHuacales.Api.Models.Tareas", b =>
+                {
+                    b.Property<int>("TareaId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Descripcion")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Tiempo")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("TareaId");
+
+                    b.ToTable("Tareas");
+                });
+
             modelBuilder.Entity("GestionHuacales.Api.Models.TiposHuacales", b =>
                 {
                     b.Property<int>("IdTipo")
@@ -223,6 +292,25 @@ namespace GestionHuacales.Api.Migrations
                             Descripcion = "Rojo",
                             Existencia = 0
                         });
+                });
+
+            modelBuilder.Entity("GestionHuacales.Api.Models.Usuarios", b =>
+                {
+                    b.Property<int>("UsuarioId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Password")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("UserName")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("UsuarioId");
+
+                    b.ToTable("Usuarios");
                 });
 
             modelBuilder.Entity("GestionHuacales.Api.Models.EntradaHuacalesDetalle", b =>
