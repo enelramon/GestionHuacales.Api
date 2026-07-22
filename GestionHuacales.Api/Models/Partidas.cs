@@ -9,8 +9,8 @@ public class Partidas
     [Key]
     public int PartidaId { get; set; }
 
-    public int Jugador1Id { get; set; } = 3;
-    public int? Jugador2Id { get; set; } = 4;
+    public int Jugador1Id { get; set; }
+    public int? Jugador2Id { get; set; }
 
     [Required]
     [StringLength(20)]
